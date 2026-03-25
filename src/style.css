@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+/* Reasonable default so Tailwind layouts can use `h-full` / `min-h-screen`. */
+html,
+body,
+#app {
+  height: 100%;
+}
+
