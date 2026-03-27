@@ -99,7 +99,7 @@ function numberForSourceField(field: SourceField) {
 }
 
 function onVatRateChange(event: Event) {
-  const target = event.target as HTMLSelectElement
+  const target = event.target as HTMLInputElement | HTMLSelectElement
   vatRate.value = Number(target.value) as VATRate
 }
 
@@ -135,22 +135,39 @@ function onEdit(field: SourceField, event: Event) {
     <div class="mx-auto max-w-2xl p-6">
       <h1 class="text-2xl font-semibold">Withholding Tax Calculator</h1>
       <p class="mt-1 text-sm text-slate-600">
-        Net Amount is the base amount (same as Withholding Taxable Amount). VAT is applied on the
-        net, and withholding is 3% when net is at least 20,000.
+        Net Amount is the base amount (same as Withholding Taxable Amount). Grand Total Amount is
+        Net Amount + VAT Amount, and withholding is 3% when net is at least 20,000.
       </p>
 
-      <div class="mt-6">
-        <label class="block text-sm font-medium text-slate-500">VAT Type</label>
-        <select
-          class="mt-1 w-full -ml-2 bg-white p-0 pr-2 text-left text-6xl tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
-          :value="vatRate"
-          @change="onVatRateChange"
-        >
-          <option v-for="opt in vatRateOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
-      </div>
+      <fieldset class="mt-6">
+        <legend class="block text-sm font-medium text-slate-500">VAT Type</legend>
+        <div class="mt-2 flex w-full rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <label
+            v-for="opt in vatRateOptions"
+            :key="opt.value"
+            class="relative flex-1 cursor-pointer rounded-lg"
+          >
+            <input
+              class="peer sr-only"
+              type="radio"
+              name="vatType"
+              :value="opt.value"
+              :checked="vatRate === opt.value"
+              @change="onVatRateChange"
+            />
+            <span
+              class="inline-flex w-full items-center justify-center rounded-lg px-4 py-2 leading-none text-6xl tracking-tight font-semibold transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2"
+              :class="
+                vatRate === opt.value
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              "
+            >
+              {{ opt.label }}
+            </span>
+          </label>
+        </div>
+      </fieldset>
 
       <div class="mt-6 grid gap-x-6 gap-y-8 md:grid-cols-2">
         <div>
@@ -158,7 +175,7 @@ function onEdit(field: SourceField, event: Event) {
             Net Amount (Withholding Taxable)
           </label>
           <input
-            class="mt-1 w-full bg-white text-6xl tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.netAmount }"
             type="text"
             step="0.01"
@@ -173,28 +190,26 @@ function onEdit(field: SourceField, event: Event) {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-500">Grand Total Amount</label>
+          <label class="block text-sm font-medium text-slate-500">VAT Amount</label>
           <input
-            class="mt-1 w-full bg-white text-6xl tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
-            :class="{ 'text-green-500': flashMap.grandTotalAmount }"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            :class="{ 'text-green-500': flashMap.vatAmount }"
             type="text"
             step="0.01"
             inputmode="decimal"
             :value="
-              focusedField === 'grandTotalAmount'
-                ? rawInput.grandTotalAmount
-                : format2Display(calc.grandTotalAmount)
+              focusedField === 'vatAmount' ? rawInput.vatAmount : format2Display(calc.vatAmount)
             "
-            @input="onEdit('grandTotalAmount', $event)"
-            @focus="onFocus('grandTotalAmount')"
-            @blur="onBlur('grandTotalAmount')"
+            @input="onEdit('vatAmount', $event)"
+            @focus="onFocus('vatAmount')"
+            @blur="onBlur('vatAmount')"
           />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-slate-500">Withholding Tax Amount</label>
           <input
-            class="mt-1 w-full bg-white text-6xl tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.withholdingTaxAmount }"
             type="text"
             step="0.01"
@@ -211,19 +226,21 @@ function onEdit(field: SourceField, event: Event) {
         </div>
 
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-slate-500">VAT Amount</label>
+          <label class="block text-sm font-medium text-slate-500">Grand Total Amount</label>
           <input
-            class="mt-1 w-full bg-white text-6xl tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
-            :class="{ 'text-green-500': flashMap.vatAmount }"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            :class="{ 'text-green-500': flashMap.grandTotalAmount }"
             type="text"
             step="0.01"
             inputmode="decimal"
             :value="
-              focusedField === 'vatAmount' ? rawInput.vatAmount : format2Display(calc.vatAmount)
+              focusedField === 'grandTotalAmount'
+                ? rawInput.grandTotalAmount
+                : format2Display(calc.grandTotalAmount)
             "
-            @input="onEdit('vatAmount', $event)"
-            @focus="onFocus('vatAmount')"
-            @blur="onBlur('vatAmount')"
+            @input="onEdit('grandTotalAmount', $event)"
+            @focus="onFocus('grandTotalAmount')"
+            @blur="onBlur('grandTotalAmount')"
           />
         </div>
       </div>

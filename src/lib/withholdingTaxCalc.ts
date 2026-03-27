@@ -13,6 +13,7 @@ const WITHHOLDING_THRESHOLD = 20000
 export function forwardFromNet(netAmount: number, vatRate: number) {
   // VAT is a simple percentage of the net/base amount.
   const vatAmount = netAmount * vatRate
+  // Canonical rule: Grand Total Amount is always Net Amount + VAT Amount.
   const grandTotalAmount = netAmount + vatAmount
 
   return { vatAmount, grandTotalAmount }
@@ -66,4 +67,3 @@ export function recalculateAll(params: {
     withholdingTaxAmount,
   }
 }
-
