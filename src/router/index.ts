@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import WithcalView from '../views/WithcalView.vue'
+import SalcalView from '../views/SalcalView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/withcal',
       name: 'withcal',
       component: WithcalView,
+    },
+    {
+      path: '/salcal',
+      name: 'salcal',
+      component: SalcalView,
     },
   ],
 })

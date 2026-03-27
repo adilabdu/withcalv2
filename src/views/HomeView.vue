@@ -17,6 +17,14 @@ import { RouterLink } from 'vue-router'
           Go to Withholding Calculator
         </RouterLink>
       </div>
+      <div>
+        <RouterLink
+          class="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-white transition-colors hover:bg-slate-700"
+          to="/salcal"
+        >
+          Go to Salary Calculator
+        </RouterLink>
+      </div>
     </section>
   </main>
 </template>
