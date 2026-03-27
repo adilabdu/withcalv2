@@ -139,43 +139,51 @@ function onEdit(field: SourceField, event: Event) {
         Net Amount + VAT Amount, and withholding is 3% when net is at least 20,000.
       </p>
 
-      <fieldset class="mt-6">
-        <legend class="block text-sm font-medium text-slate-500">VAT Type</legend>
-        <div class="mt-2 flex w-full rounded-xl border border-slate-200 bg-slate-50 p-1">
-          <label
-            v-for="opt in vatRateOptions"
-            :key="opt.value"
-            class="relative flex-1 cursor-pointer rounded-lg"
+      <div class="mt-6 w-full min-w-0">
+        <p class="block text-sm font-medium text-slate-500">VAT Type</p>
+        <div class="mt-2 w-full min-w-0 max-w-full overflow-hidden">
+          <div
+            class="box-border w-full min-w-0 max-w-full overflow-x-auto overflow-y-hidden rounded-xl border border-slate-200 bg-slate-50 p-1 sm:overflow-x-visible"
+            role="radiogroup"
+            aria-label="VAT Type"
           >
-            <input
-              class="peer sr-only"
-              type="radio"
-              name="vatType"
-              :value="opt.value"
-              :checked="vatRate === opt.value"
-              @change="onVatRateChange"
-            />
-            <span
-              class="inline-flex w-full items-center justify-center rounded-lg px-4 py-2 leading-none text-6xl tracking-tight font-semibold transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2"
-              :class="
-                vatRate === opt.value
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
-              "
-            >
-              {{ opt.label }}
-            </span>
-          </label>
+            <div class="flex min-w-max sm:min-w-0 sm:w-full">
+              <label
+                v-for="opt in vatRateOptions"
+                :key="opt.value"
+                class="relative min-w-max flex-none cursor-pointer rounded-lg sm:min-w-0 sm:flex-1"
+              >
+                <input
+                  class="peer sr-only"
+                  type="radio"
+                  name="vatType"
+                  :value="opt.value"
+                  :checked="vatRate === opt.value"
+                  @change="onVatRateChange"
+                />
+                <span
+                  class="inline-flex w-full whitespace-nowrap items-center justify-center rounded-lg px-6 py-2 text-center leading-none text-6xl tracking-tight font-semibold transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2"
+                  :class="
+                    vatRate === opt.value
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-600'
+                  "
+                >
+                  {{ opt.label }}
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
-      </fieldset>
+      </div>
 
-      <div class="mt-6 grid gap-x-6 gap-y-8 md:grid-cols-2">
+      <div class="mt-6 grid gap-x-6 gap-y-8 sm:grid-cols-2">
         <div>
           <label class="block text-sm font-medium text-slate-500">
             Net Amount (Withholding Taxable)
           </label>
           <input
-            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.netAmount }"
             type="text"
             step="0.01"
@@ -192,7 +200,7 @@ function onEdit(field: SourceField, event: Event) {
         <div>
           <label class="block text-sm font-medium text-slate-500">VAT Amount</label>
           <input
-            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.vatAmount }"
             type="text"
             step="0.01"
@@ -209,7 +217,7 @@ function onEdit(field: SourceField, event: Event) {
         <div>
           <label class="block text-sm font-medium text-slate-500">Withholding Tax Amount</label>
           <input
-            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.withholdingTaxAmount }"
             type="text"
             step="0.01"
@@ -225,10 +233,10 @@ function onEdit(field: SourceField, event: Event) {
           />
         </div>
 
-        <div class="md:col-span-2">
+        <div class="sm:col-span-2">
           <label class="block text-sm font-medium text-slate-500">Grand Total Amount</label>
           <input
-            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.grandTotalAmount }"
             type="text"
             step="0.01"
