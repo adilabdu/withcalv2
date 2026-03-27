@@ -130,7 +130,8 @@ export function calculateSalaryBreakdown(inputs: SalaryInputs): SalaryBreakdown 
   const computedEmployerPension = employerPensionContribution(inputs.baseSalary)
   const computedEmployeePension = employeePensionContribution(inputs.baseSalary)
   const computedTaxBurden = computedIncomeTax + computedEmployerPension + computedEmployeePension
-  const computedGrossIncome = inputs.baseSalary + inputs.transportationAllowance + computedOvertimeAmount
+  const computedGrossIncome =
+    inputs.baseSalary + inputs.transportationAllowance + computedOvertimeAmount
 
   return {
     baseSalary: inputs.baseSalary,
@@ -164,7 +165,8 @@ function resolveConstraintValues(targetNetPayAmount: number, constraints: Optimi
   const minOvertimeHours = constraints.minOvertimeHours ?? 14
   const maxOvertimeHours = constraints.maxOvertimeHours ?? 26
   const parsedOvertimeStep = constraints.overtimeStep ?? 0.25
-  const overtimeStep = Number.isFinite(parsedOvertimeStep) && parsedOvertimeStep > 0 ? parsedOvertimeStep : 0.25
+  const overtimeStep =
+    Number.isFinite(parsedOvertimeStep) && parsedOvertimeStep > 0 ? parsedOvertimeStep : 0.25
   const parsedEpsilon = constraints.epsilon ?? 0.01
   const epsilon = Number.isFinite(parsedEpsilon) && parsedEpsilon >= 0 ? parsedEpsilon : 0.01
 

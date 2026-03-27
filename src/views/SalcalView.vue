@@ -37,7 +37,9 @@ const isWithinTolerance = computed(() =>
     : signedDeltaToTarget.value >= -0.000001 && signedDeltaToTarget.value <= epsilon.value,
 )
 const taxBracketLabel = computed(() =>
-  optimization.value.breakdown ? incomeTaxBracketLabel(optimization.value.breakdown.taxableIncome) : 'N/A',
+  optimization.value.breakdown
+    ? incomeTaxBracketLabel(optimization.value.breakdown.taxableIncome)
+    : 'N/A',
 )
 
 function formatSignedMoney(value: number) {
@@ -56,8 +58,8 @@ function formatSignedMoney(value: number) {
       <h1 class="text-2xl font-semibold text-slate-900">Salary Calculator (Optimizer)</h1>
       <p class="mt-1 text-sm text-slate-600">
         Enter a target net pay amount. The optimizer solves for base salary, transport allowance,
-        and overtime hours to minimize tax burden under your constraints. Epsilon sets an
-        upper-only band: computed net must be between target and target + epsilon.
+        and overtime hours to minimize tax burden under your constraints. Epsilon sets an upper-only
+        band: computed net must be between target and target + epsilon.
       </p>
 
       <div class="mt-6 grid gap-4 sm:grid-cols-2">
@@ -96,7 +98,8 @@ function formatSignedMoney(value: number) {
           </span>
         </p>
         <p class="text-sm text-slate-600">
-          Iterations: <span class="font-semibold text-slate-900">{{ optimization.iterations }}</span>
+          Iterations:
+          <span class="font-semibold text-slate-900">{{ optimization.iterations }}</span>
         </p>
         <p class="text-sm text-slate-600">
           Delta to target (signed):
@@ -121,16 +124,29 @@ function formatSignedMoney(value: number) {
       <div v-if="optimization.isFeasible && optimization.breakdown" class="mt-6">
         <h2 class="text-lg font-semibold text-slate-900">Optimized Result</h2>
         <div class="mt-3 grid gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2">
-          <p>Base Salary: <strong>{{ formatMoney(optimization.breakdown.baseSalary) }}</strong></p>
+          <p>
+            Base Salary: <strong>{{ formatMoney(optimization.breakdown.baseSalary) }}</strong>
+          </p>
           <p>
             Transportation Allowance:
             <strong>{{ formatMoney(optimization.breakdown.transportationAllowance) }}</strong>
           </p>
-          <p>Overtime Hours: <strong>{{ optimization.breakdown.overtimeHours.toFixed(2) }}</strong></p>
-          <p>Overtime Amount: <strong>{{ formatMoney(optimization.breakdown.overtimeAmount) }}</strong></p>
-          <p>Taxable Amount: <strong>{{ formatMoney(optimization.breakdown.taxableIncome) }}</strong></p>
-          <p>Tax Bracket: <strong>{{ taxBracketLabel }}</strong></p>
-          <p>Income Tax: <strong>{{ formatMoney(optimization.breakdown.incomeTax) }}</strong></p>
+          <p>
+            Overtime Hours: <strong>{{ optimization.breakdown.overtimeHours.toFixed(2) }}</strong>
+          </p>
+          <p>
+            Overtime Amount:
+            <strong>{{ formatMoney(optimization.breakdown.overtimeAmount) }}</strong>
+          </p>
+          <p>
+            Taxable Amount: <strong>{{ formatMoney(optimization.breakdown.taxableIncome) }}</strong>
+          </p>
+          <p>
+            Tax Bracket: <strong>{{ taxBracketLabel }}</strong>
+          </p>
+          <p>
+            Income Tax: <strong>{{ formatMoney(optimization.breakdown.incomeTax) }}</strong>
+          </p>
           <p>
             Employer Pension:
             <strong>{{ formatMoney(optimization.breakdown.employerPensionContribution) }}</strong>
@@ -139,9 +155,16 @@ function formatSignedMoney(value: number) {
             Employee Pension:
             <strong>{{ formatMoney(optimization.breakdown.employeePensionContribution) }}</strong>
           </p>
-          <p>Tax Burden: <strong>{{ formatMoney(optimization.breakdown.taxBurdenAmount) }}</strong></p>
-          <p>Gross Income: <strong>{{ formatMoney(optimization.breakdown.grossIncome) }}</strong></p>
-          <p>Net Pay (Computed): <strong>{{ formatMoney(optimization.breakdown.netPayAmount) }}</strong></p>
+          <p>
+            Tax Burden: <strong>{{ formatMoney(optimization.breakdown.taxBurdenAmount) }}</strong>
+          </p>
+          <p>
+            Gross Income: <strong>{{ formatMoney(optimization.breakdown.grossIncome) }}</strong>
+          </p>
+          <p>
+            Net Pay (Computed):
+            <strong>{{ formatMoney(optimization.breakdown.netPayAmount) }}</strong>
+          </p>
         </div>
       </div>
 
