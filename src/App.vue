@@ -15,6 +15,9 @@ const sourceValue = ref<number>(0)
 
 // Default to 15%; ensures we always have a VAT rate even if the options array changes.
 const vatRate = ref<VATRate>(0.15)
+const selectedVatRateLabel = computed(
+  () => vatRateOptions.find((opt) => opt.value === vatRate.value)?.label ?? '',
+)
 
 const calc = computed(() =>
   recalculateAll({
@@ -34,6 +37,7 @@ const rawInput = ref<Record<SourceField, string>>({
   grandTotalAmount: '0',
   withholdingTaxAmount: '0',
   vatAmount: '0',
+  paymentAmount: '0',
 })
 
 const flashMap = ref<Record<SourceField, boolean>>({
@@ -42,6 +46,7 @@ const flashMap = ref<Record<SourceField, boolean>>({
   grandTotalAmount: false,
   withholdingTaxAmount: false,
   vatAmount: false,
+  paymentAmount: false,
 })
 
 const flashTimers: Partial<Record<SourceField, ReturnType<typeof setTimeout>>> = {}
@@ -57,6 +62,7 @@ function startFlash(targets: SourceField[]) {
       flashMap.value[field] = false
     }, 500)
   }
+
 }
 
 function parseInput(raw: string) {
@@ -82,8 +88,7 @@ function format2Display(value: number) {
 }
 
 function numberForSourceField(field: SourceField) {
-  // Only `netAmount`, `grandTotalAmount`, `withholdingTaxAmount`, and `vatAmount` are
-  // produced by the calculator; `withholdingTaxableAmount` mirrors `netAmount`.
+  // `withholdingTaxableAmount` mirrors `netAmount`.
   switch (field) {
     case 'netAmount':
       return calc.value.netAmount
@@ -95,6 +100,8 @@ function numberForSourceField(field: SourceField) {
       return calc.value.withholdingTaxAmount
     case 'vatAmount':
       return calc.value.vatAmount
+    case 'paymentAmount':
+      return calc.value.paymentAmount
   }
 }
 
@@ -125,6 +132,7 @@ function onEdit(field: SourceField, event: Event) {
     'grandTotalAmount',
     'withholdingTaxAmount',
     'vatAmount',
+    'paymentAmount',
   ]
   startFlash(numericTargets.filter((t) => t !== field))
 }
@@ -183,7 +191,7 @@ function onEdit(field: SourceField, event: Event) {
             Net Amount (Withholding Taxable)
           </label>
           <input
-            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.netAmount }"
             type="text"
             step="0.01"
@@ -198,9 +206,11 @@ function onEdit(field: SourceField, event: Event) {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-500">VAT Amount</label>
+          <label class="block text-sm font-medium text-slate-500">
+            VAT Amount ({{ selectedVatRateLabel }})
+          </label>
           <input
-            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.vatAmount }"
             type="text"
             step="0.01"
@@ -217,7 +227,7 @@ function onEdit(field: SourceField, event: Event) {
         <div>
           <label class="block text-sm font-medium text-slate-500">Withholding Tax Amount</label>
           <input
-            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.withholdingTaxAmount }"
             type="text"
             step="0.01"
@@ -236,7 +246,7 @@ function onEdit(field: SourceField, event: Event) {
         <div class="sm:col-span-2">
           <label class="block text-sm font-medium text-slate-500">Grand Total Amount</label>
           <input
-            class="mt-1 w-full bg-white px-2 text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
             :class="{ 'text-green-500': flashMap.grandTotalAmount }"
             type="text"
             step="0.01"
@@ -249,6 +259,25 @@ function onEdit(field: SourceField, event: Event) {
             @input="onEdit('grandTotalAmount', $event)"
             @focus="onFocus('grandTotalAmount')"
             @blur="onBlur('grandTotalAmount')"
+          />
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-slate-500">Payment Amount</label>
+          <input
+            class="mt-1 w-full bg-white text-6xl font-sans tabular-nums tracking-tight font-semibold leading-none focus:outline-none focus:ring-0"
+            :class="{ 'text-green-500': flashMap.paymentAmount }"
+            type="text"
+            step="0.01"
+            inputmode="decimal"
+            :value="
+              focusedField === 'paymentAmount'
+                ? rawInput.paymentAmount
+                : format2Display(calc.paymentAmount)
+            "
+            @input="onEdit('paymentAmount', $event)"
+            @focus="onFocus('paymentAmount')"
+            @blur="onBlur('paymentAmount')"
           />
         </div>
       </div>

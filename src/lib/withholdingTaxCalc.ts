@@ -6,6 +6,7 @@ export type SourceField =
   | 'grandTotalAmount'
   | 'withholdingTaxAmount'
   | 'vatAmount'
+  | 'paymentAmount'
 
 const WITHHOLDING_RATE = 0.03
 const WITHHOLDING_THRESHOLD = 20000
@@ -46,6 +47,17 @@ export function netFromSource(params: {
       // Inverse: VAT = N * vatRate => N = VAT / vatRate
       // (vatRate is never 0 for the supported options, but keep it safe.)
       return vatRate !== 0 ? sourceValue / vatRate : 0
+    case 'paymentAmount': {
+      // Payment = Grand Total - Withholding.
+      // For net below threshold, withholding is 0 => payment = net * (1 + vatRate).
+      const netWithoutWithholding = sourceValue / (1 + vatRate)
+      if (netWithoutWithholding < WITHHOLDING_THRESHOLD) {
+        return netWithoutWithholding
+      }
+
+      // For net at/above threshold, withholding is 3% => payment = net * (1 + vatRate - 0.03).
+      return sourceValue / (1 + vatRate - WITHHOLDING_RATE)
+    }
     default:
       return sourceValue
   }
@@ -59,11 +71,13 @@ export function recalculateAll(params: {
   const netAmount = netFromSource(params)
   const { vatAmount, grandTotalAmount } = forwardFromNet(netAmount, params.vatRate)
   const withholdingTaxAmount = withholdingFromNet(netAmount)
+  const paymentAmount = grandTotalAmount - withholdingTaxAmount
 
   return {
     netAmount,
     vatAmount,
     grandTotalAmount,
     withholdingTaxAmount,
+    paymentAmount,
   }
 }
