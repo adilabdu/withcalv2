@@ -20,34 +20,29 @@ export interface SalaryBreakdown {
   grossIncome: number
 }
 
-export interface OptimizationConstraints {
-  minOvertimeHours?: number
-  maxOvertimeHours?: number
-  overtimeStep?: number
-  minBaseSalary?: number
-  maxBaseSalary?: number
-  epsilon?: number
-}
-
-export interface OptimizationResult {
-  isFeasible: boolean
-  targetNetPayAmount: number
-  deltaToTarget: number
-  iterations: number
-  breakdown: SalaryBreakdown | null
-}
-
 const HOURS_PER_DAY = 8
 const DAYS_PER_MONTH = 30
 const OVERTIME_MULTIPLIER = 1.5
 const EMPLOYER_PENSION_RATE = 0.11
 const EMPLOYEE_PENSION_RATE = 0.07
 const MAX_TRANSPORT_ALLOWANCE = 2200
-const MAX_SEARCH_BASE_CAP = 5_000_000
-const NUMERIC_TOLERANCE = 1e-9
 
 function transportCap(baseSalary: number) {
   return Math.min(baseSalary * 0.25, MAX_TRANSPORT_ALLOWANCE)
+}
+
+export const SALARY_CALCULATOR_DEFAULT_INPUTS: SalaryInputs = {
+  baseSalary: 10_000,
+  transportationAllowance: 500,
+  overtimeHours: 14,
+}
+
+export function defaultSalaryInputs(): SalaryInputs {
+  return { ...SALARY_CALCULATOR_DEFAULT_INPUTS }
+}
+
+export function maxTransportationAllowance(baseSalary: number) {
+  return transportCap(baseSalary)
 }
 
 export function hourlyRate(baseSalary: number) {
@@ -147,182 +142,5 @@ export function calculateSalaryBreakdown(inputs: SalaryInputs): SalaryBreakdown 
     taxBurdenAmount: computedTaxBurden,
     netPayAmount: computedGrossIncome - computedIncomeTax - computedEmployeePension,
     grossIncome: computedGrossIncome,
-  }
-}
-
-function netWithoutTransport(baseSalary: number, overtimeHours: number) {
-  return netPayAmount({ baseSalary, overtimeHours, transportationAllowance: 0 })
-}
-
-function netWithMaxTransport(baseSalary: number, overtimeHours: number) {
-  return netWithoutTransport(baseSalary, overtimeHours) + transportCap(baseSalary)
-}
-
-function resolveConstraintValues(targetNetPayAmount: number, constraints: OptimizationConstraints) {
-  const minBaseSalary = constraints.minBaseSalary ?? 0
-  const defaultMax = Math.max(20_000, targetNetPayAmount * 3)
-  const maxBaseSalary = constraints.maxBaseSalary ?? defaultMax
-  const minOvertimeHours = constraints.minOvertimeHours ?? 14
-  const maxOvertimeHours = constraints.maxOvertimeHours ?? 26
-  const parsedOvertimeStep = constraints.overtimeStep ?? 0.25
-  const overtimeStep =
-    Number.isFinite(parsedOvertimeStep) && parsedOvertimeStep > 0 ? parsedOvertimeStep : 0.25
-  const parsedEpsilon = constraints.epsilon ?? 0.01
-  const epsilon = Number.isFinite(parsedEpsilon) && parsedEpsilon >= 0 ? parsedEpsilon : 0.01
-
-  return {
-    minBaseSalary,
-    maxBaseSalary,
-    minOvertimeHours,
-    maxOvertimeHours,
-    overtimeStep,
-    epsilon,
-  }
-}
-
-function findBaseUpperBound(
-  targetNetPayAmount: number,
-  overtimeHours: number,
-  lowerBound: number,
-  configuredMax: number,
-) {
-  let upper = Math.max(lowerBound, configuredMax)
-  while (upper < MAX_SEARCH_BASE_CAP) {
-    if (netWithMaxTransport(upper, overtimeHours) >= targetNetPayAmount) {
-      return upper
-    }
-    upper = Math.min(upper * 2 + 1, MAX_SEARCH_BASE_CAP)
-  }
-  return upper
-}
-
-function findMinimumFeasibleBase(
-  minAcceptableNetPay: number,
-  maxAcceptableNetPay: number,
-  overtimeHours: number,
-  minBaseSalary: number,
-  maxBaseSalary: number,
-) {
-  const lowerBase = minBaseSalary
-  const upperBase = findBaseUpperBound(minAcceptableNetPay, overtimeHours, lowerBase, maxBaseSalary)
-
-  if (netWithMaxTransport(upperBase, overtimeHours) < minAcceptableNetPay) {
-    return null
-  }
-
-  let left = lowerBase
-  let right = upperBase
-  for (let i = 0; i < 80; i += 1) {
-    const mid = (left + right) / 2
-    if (netWithMaxTransport(mid, overtimeHours) >= minAcceptableNetPay) {
-      right = mid
-    } else {
-      left = mid
-    }
-  }
-
-  const candidateBase = right
-  const netAtZeroTransport = netWithoutTransport(candidateBase, overtimeHours)
-  if (netAtZeroTransport - maxAcceptableNetPay > NUMERIC_TOLERANCE) {
-    return null
-  }
-
-  const requiredTransport = minAcceptableNetPay - netAtZeroTransport
-  const cap = transportCap(candidateBase)
-  if (requiredTransport < -NUMERIC_TOLERANCE || requiredTransport - cap > NUMERIC_TOLERANCE) {
-    return null
-  }
-
-  return candidateBase
-}
-
-export function optimizeForTargetNet(
-  targetNetPayAmount: number,
-  constraints: OptimizationConstraints = {},
-): OptimizationResult {
-  const {
-    minBaseSalary,
-    maxBaseSalary,
-    minOvertimeHours,
-    maxOvertimeHours,
-    overtimeStep,
-    epsilon,
-  } = resolveConstraintValues(targetNetPayAmount, constraints)
-  const minAcceptableNetPay = targetNetPayAmount
-  const maxAcceptableNetPay = targetNetPayAmount + epsilon
-
-  let iterations = 0
-  let bestBreakdown: SalaryBreakdown | null = null
-
-  for (
-    let overtimeHours = minOvertimeHours;
-    overtimeHours <= maxOvertimeHours + NUMERIC_TOLERANCE;
-    overtimeHours += overtimeStep
-  ) {
-    iterations += 1
-    const normalizedOvertime = Number(overtimeHours.toFixed(6))
-    const base = findMinimumFeasibleBase(
-      minAcceptableNetPay,
-      maxAcceptableNetPay,
-      normalizedOvertime,
-      minBaseSalary,
-      maxBaseSalary,
-    )
-
-    if (base === null) {
-      continue
-    }
-
-    const netAtZeroTransport = netWithoutTransport(base, normalizedOvertime)
-    const cap = transportCap(base)
-    const transportationForTarget = targetNetPayAmount - netAtZeroTransport
-    const transportationForMinimum = minAcceptableNetPay - netAtZeroTransport
-    const transportationAllowance = Math.min(
-      Math.max(transportationForTarget, transportationForMinimum, 0),
-      cap,
-    )
-    const breakdown = calculateSalaryBreakdown({
-      baseSalary: base,
-      transportationAllowance,
-      overtimeHours: normalizedOvertime,
-    })
-    const deltaToTarget = Math.abs(breakdown.netPayAmount - targetNetPayAmount)
-
-    if (
-      breakdown.netPayAmount < minAcceptableNetPay - NUMERIC_TOLERANCE ||
-      breakdown.netPayAmount > maxAcceptableNetPay + NUMERIC_TOLERANCE
-    ) {
-      continue
-    }
-
-    if (
-      bestBreakdown === null ||
-      breakdown.taxBurdenAmount < bestBreakdown.taxBurdenAmount ||
-      (Math.abs(breakdown.taxBurdenAmount - bestBreakdown.taxBurdenAmount) <= epsilon &&
-        (deltaToTarget < Math.abs(bestBreakdown.netPayAmount - targetNetPayAmount) ||
-          (Math.abs(deltaToTarget - Math.abs(bestBreakdown.netPayAmount - targetNetPayAmount)) <=
-            NUMERIC_TOLERANCE &&
-            breakdown.baseSalary < bestBreakdown.baseSalary)))
-    ) {
-      bestBreakdown = breakdown
-    }
-  }
-
-  if (bestBreakdown === null) {
-    return {
-      isFeasible: false,
-      targetNetPayAmount,
-      deltaToTarget: Number.POSITIVE_INFINITY,
-      iterations,
-      breakdown: null,
-    }
-  }
-
-  return {
-    isFeasible: true,
-    targetNetPayAmount,
-    deltaToTarget: Math.abs(bestBreakdown.netPayAmount - targetNetPayAmount),
-    iterations,
-    breakdown: bestBreakdown,
   }
 }
